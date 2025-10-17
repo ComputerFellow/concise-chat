@@ -1,0 +1,68 @@
+import React, { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Send, Loader2 } from "lucide-react";
+
+export default function ChatInput({ onSend, isLoading }) {
+  const [message, setMessage] = useState("");
+  const textareaRef = useRef(null);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (message.trim() && !isLoading) {
+      onSend(message);
+      setMessage("");
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  };
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 200) + "px";
+    }
+  }, [message]);
+
+  return (
+    <form onSubmit={handleSubmit} className="w-full">
+      <div className="relative bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200/50 p-4">
+        <Textarea
+          ref={textareaRef}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Ask me anything..."
+          disabled={isLoading}
+          className="min-h-[60px] max-h-[200px] resize-none border-0 focus-visible:ring-0 text-[15px] leading-relaxed px-4 py-3 bg-transparent"
+          rows={1}
+        />
+        
+        <div className="flex items-center justify-end mt-2">
+          <Button
+            type="submit"
+            disabled={!message.trim() || isLoading}
+            className="rounded-full h-12 px-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg disabled:opacity-50 transition-all duration-200"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Thinking...
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4 mr-2" />
+                Send
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+    </form>
+  );
+}

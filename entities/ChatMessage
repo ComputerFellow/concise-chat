@@ -1,0 +1,34 @@
+{
+  "name": "ChatMessage",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "user",
+        "assistant"
+      ],
+      "description": "Who sent the message"
+    },
+    "content": {
+      "type": "string",
+      "description": "Message content"
+    },
+    "model": {
+      "type": "string",
+      "enum": [
+        "grok",
+        "kimi"
+      ],
+      "description": "AI model used"
+    },
+    "concise_mode": {
+      "type": "boolean",
+      "description": "Whether concise mode was enabled"
+    }
+  },
+  "required": [
+    "role",
+    "content"
+  ]
+}
