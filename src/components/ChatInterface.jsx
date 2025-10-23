@@ -1,15 +1,15 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Send, Trash2, Sparkles, User } from "lucide-react";
 
-// Firebase placeholder configuration
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "your-app.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-app.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "your-app-id",
-};
+// // Firebase placeholder configuration
+// const firebaseConfig = {
+//   apiKey: "YOUR_API_KEY",
+//   authDomain: "your-app.firebaseapp.com",
+//   projectId: "your-project-id",
+//   storageBucket: "your-app.appspot.com",
+//   messagingSenderId: "123456789",
+//   appId: "your-app-id"
+// };
 
 // Simulated API calls (replace with actual Firebase/API calls)
 const simulateAPICall = async (model, message, conciseMode) => {
@@ -17,17 +17,17 @@ const simulateAPICall = async (model, message, conciseMode) => {
 
   const responses = {
     kimi: conciseMode
-      ? "I'm Grok, xAI's conversational AI. I excel at real-time information and witty responses."
-      : "I'm Grok, an AI assistant created by xAI. I'm designed to be helpful, accurate, and have a bit of personality. I can assist with a wide range of tasks. How can I help you today?",
+      ? "I'm Kimi K2, Moonshot AI's open-source model. I excel at coding and long-context tasks."
+      : "I'm Kimi K2, an advanced open-source language model by Moonshot AI. With 1 trillion parameters and a 256K token context window, I'm optimized for coding, reasoning, and autonomous task execution. How can I help you today?",
     gpt35: conciseMode
-      ? "I'm ChatGPT, OpenAI's efficient assistant. I'm fast and helpful for everyday tasks."
-      : "I'm ChatGPT, a conversational AI by OpenAI. I'm designed to provide helpful, accurate responses for a wide range of tasks including conversation, writing assistance, and problem-solving. What would you like to know?",
+      ? "I'm GPT-3.5, OpenAI's efficient assistant. I'm fast and helpful for everyday tasks."
+      : "I'm GPT-3.5 Turbo, a cost-effective language model by OpenAI. I'm designed to provide quick, helpful responses for a wide range of tasks including conversation, writing assistance, and problem-solving. What would you like to know?",
   };
 
   return responses[model];
 };
 
-const ChatUI = () => {
+const ChatInterface = () => {
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -43,8 +43,8 @@ const ChatUI = () => {
   const messagesEndRef = useRef(null);
 
   const modelConfig = {
-    kimi: { name: "Grok", icon: "⚡", color: "purple" },
-    gpt35: { name: "ChatGPT", icon: "🤖", color: "green" },
+    kimi: { name: "Kimi K2", icon: "🚀", color: "purple" },
+    gpt35: { name: "GPT-3.5", icon: "🤖", color: "green" },
   };
 
   const scrollToBottom = () => {
@@ -70,44 +70,30 @@ const ChatUI = () => {
     setIsLoading(true);
 
     try {
-  const userMessageText = inputValue.trim();
+      // Simulate API call to selected model
+      const response = await simulateAPICall(
+        selectedModel,
+        inputValue,
+        conciseMode
+      );
 
-  // model selector
-  const model = selectedModel === 'gpt35'
-              ? 'openai/gpt-3.5-turbo'
-              : 'x-ai/grok-3-mini';
-  
-  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
-      'HTTP-Referer': window.location.href,   // OpenRouter requires this
-      'X-Title': 'Concise Chat',              // optional, app name
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: 'system', content: conciseMode ? 'You are a helpful assistant. Keep your responses concise and to the point, typically 1-3 sentences.' : 'You are a helpful assistant.' },
-        { role: 'user', content: userMessageText },
-      ],
-      temperature: 0.7,
-    }),
-  });
+      const botMessage = {
+        id: Date.now() + 1,
+        type: "bot",
+        text: response,
+        model: selectedModel,
+      };
 
-  if (!res.ok) throw new Error('API error ' + res.status);
-
-  const data = await res.json();
-  const reply = data.choices?.[0]?.message?.content || 'No reply';
-
-  const botMessage = {
-    id: Date.now() + 1,
-    type: 'bot',
-    text: reply,
-    model: selectedModel,
-  };
-  setMessages((prev) => [...prev, botMessage]);
-} finally {
+      setMessages((prev) => [...prev, botMessage]);
+    } catch (error) {
+      const errorMessage = {
+        id: Date.now() + 1,
+        type: "bot",
+        text: "Sorry, I encountered an error. Please try again.",
+        model: selectedModel,
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -163,7 +149,7 @@ const ChatUI = () => {
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
-                ⚡ Grok
+                🚀 Kimi K2
               </button>
               <button
                 onClick={() => setSelectedModel("gpt35")}
@@ -173,7 +159,7 @@ const ChatUI = () => {
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
-                🤖 ChatGPT
+                🤖 GPT-3.5
               </button>
             </div>
 
@@ -239,7 +225,7 @@ const ChatUI = () => {
                         : "text-green-600 bg-green-50"
                     }`}
                   >
-                    {message.model === "kimi" ? "Grok" : "ChatGPT"}
+                    {message.model === "kimi" ? "Kimi K2" : "GPT-3.5"}
                   </span>
                 )}
               </div>
@@ -300,4 +286,4 @@ const ChatUI = () => {
   );
 };
 
-export default ChatUI;
+export default ChatInterface;
