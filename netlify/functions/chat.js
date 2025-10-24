@@ -31,7 +31,7 @@ const { model, userMessage, conciseMode, messageHistory = [] } = JSON.parse(even
         { 
             role: 'system', 
             content: conciseMode 
-            ? 'You are a helpful assistant. Keep responses concise, 1-3 sentences.' 
+            ? 'You are a helpful assistant who is concise. Keep responses concise, 1-2 sentences.' 
             : 'You are a helpful assistant.' 
         },
         ...messageHistory,

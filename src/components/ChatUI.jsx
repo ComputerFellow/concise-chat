@@ -10,20 +10,20 @@ const ChatUI = () => {
           {
             id: 1,
             type: "bot",
-            text: "Hi, I’m Grok! How can I help you today?",
-            model: "grok",
+            text: "Hi, I’m an AI assistant! How can I help you today?",
+            model: "haiku",
           },
         ];
   });
 
   const [inputValue, setInputValue] = useState("");
-  const [selectedModel, setSelectedModel] = useState("grok");
+  const [selectedModel, setSelectedModel] = useState("haiku");
   const [conciseMode, setConciseMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
   const modelConfig = {
-    grok: { name: "Grok", icon: "⚡", color: "purple" },
+    haiku: { name: "Haiku", icon: "⚡", color: "purple" },
     gpt35: { name: "ChatGPT", icon: "🤖", color: "green" },
   };
 
@@ -34,8 +34,8 @@ const ChatUI = () => {
       const introMessage = {
         id: 1,
         type: "bot",
-        text: "Hi, I’m Grok! How can I help you today?",
-        model: "grok",
+        text: "Hi, I’m an AI assistant! How can I help you today?",
+        model: "haiku",
       };
       setMessages([introMessage]);
     }
@@ -82,7 +82,10 @@ const ChatUI = () => {
       const model =
         selectedModel === "gpt35"
           ? "openai/gpt-3.5-turbo"
-          : "x-ai/grok-3-mini";
+          : "anthropic/claude-3.5-haiku";
+        // selectedModel === "gpt35"
+        //   ? "openai/gpt-3.5-turbo"
+        //   : "anthropic/claude-3.5-haiku-20241022";
 
       const messageHistory = formatMessagesForAPI(messages, 30);
 
@@ -130,9 +133,9 @@ const ChatUI = () => {
   const handleClearChat = () => {
   const introMessage = {
     id: Date.now(),
-    type: "bot",
-    text: "Hi, I’m Grok! How can I help you today?",
-    model: "grok",
+    type: "bot",    
+    text: "Hi, I’m an AI assistant! How can I help you today?",
+    model: "haiku",
   };
 
   setMessages([introMessage]);
@@ -161,7 +164,7 @@ const ChatUI = () => {
                 <Sparkles className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">AI Chat</h1>
+                <h1 className="text-2xl font-bold text-gray-900">CoThink</h1>
                 <p className="text-sm text-gray-500">
                   {messages.length} messages
                 </p>
@@ -180,14 +183,14 @@ const ChatUI = () => {
           <div className="flex items-center justify-between">
             <div className="flex gap-2">
               <button
-                onClick={() => setSelectedModel("grok")}
+                onClick={() => setSelectedModel("haiku")}
                 className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  selectedModel === "grok"
+                  selectedModel === "haiku"
                     ? "bg-purple-100 text-purple-700"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
-                ⚡ Grok
+                ⚡ Haiku
               </button>
               <button
                 onClick={() => setSelectedModel("gpt35")}
@@ -197,7 +200,7 @@ const ChatUI = () => {
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
-                🤖 ChatGPT
+                🤖 GPT
               </button>
             </div>
 
@@ -258,12 +261,12 @@ const ChatUI = () => {
                 {message.type === "bot" && (
                   <span
                     className={`text-xs mt-1 px-2 py-1 rounded-full ${
-                      message.model === "grok"
+                      message.model === "haiku"
                         ? "text-purple-600 bg-purple-50"
                         : "text-green-600 bg-green-50"
                     }`}
                   >
-                    {message.model === "grok" ? "Grok" : "ChatGPT"}
+                    {message.model === "haiku" ? "Haiku" : "ChatGPT"}
                   </span>
                 )}
               </div>
