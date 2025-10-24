@@ -56,62 +56,61 @@ const ChatUI = () => {
   }, [messages]);
 
   const handleSend = async () => {
-  if (!inputValue.trim() || isLoading) return;
+    if (!inputValue.trim() || isLoading) return;
 
-  const userMessage = {
-    id: Date.now(),
-    type: "user",
-    text: inputValue,
+    const userMessage = {
+      id: Date.now(),
+      type: "user",
+      text: inputValue,
+      model: selectedModel,
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInputValue("");
+    setIsLoading(true);
+
+    try {
+  const userMessageText = inputValue.trim();
+
+  // model selector
+  const model = selectedModel === 'gpt35'
+              ? 'openai/gpt-3.5-turbo'
+              : 'x-ai/grok-3-mini';
+  
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
+      'HTTP-Referer': window.location.href,   // OpenRouter requires this
+      'X-Title': 'Concise Chat',              // optional, app name
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: 'system', content: conciseMode ? 'You are a helpful assistant. Keep your responses concise and to the point, typically 1-3 sentences.' : 'You are a helpful assistant.' },
+        { role: 'user', content: userMessageText },
+      ],
+      temperature: 0.7,
+    }),
+  });
+
+  if (!res.ok) throw new Error('API error ' + res.status);
+
+  const data = await res.json();
+  const reply = data.choices?.[0]?.message?.content || 'No reply';
+
+  const botMessage = {
+    id: Date.now() + 1,
+    type: 'bot',
+    text: reply,
     model: selectedModel,
   };
-
-  setMessages((prev) => [...prev, userMessage]);
-  const userMessageText = inputValue;
-  setInputValue("");
-  setIsLoading(true);
-
-  try {
-    const model = selectedModel === 'gpt35'
-                ? 'openai/gpt-3.5-turbo'
-                : 'x-ai/grok-3-mini';
-
-    const res = await fetch('/.netlify/functions/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model,
-        userMessage: userMessageText,
-        conciseMode,
-      }),
-    });
-
-    if (!res.ok) throw new Error('API error ' + res.status);
-
-    const data = await res.json();
-    const reply = data.choices?.[0]?.message?.content || 'No reply';
-
-    const botMessage = {
-      id: Date.now() + 1,
-      type: 'bot',
-      text: reply,
-      model: selectedModel,
-    };
-    setMessages((prev) => [...prev, botMessage]);
-  } catch (error) {
-    console.error('Error:', error);
-    const errorMessage = {
-      id: Date.now() + 1,
-      type: 'bot',
-      text: 'Sorry, there was an error processing your request.',
-      model: selectedModel,
-    };
-    setMessages((prev) => [...prev, errorMessage]);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  setMessages((prev) => [...prev, botMessage]);
+} finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleClearChat = () => {
     setMessages([]);
