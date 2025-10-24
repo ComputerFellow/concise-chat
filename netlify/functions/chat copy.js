@@ -11,7 +11,7 @@ exports.handler = async (event) => {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer': 'https://concise-chat.netlify.app',
+        'HTTP-Referer': 'https://yoursite.netlify.app',
         'X-Title': 'Conference Chat Demo',
       },
       body: JSON.stringify({
@@ -29,14 +29,12 @@ exports.handler = async (event) => {
       }),
     });
 
-    const data = await res.json();
-    
-    console.log('OpenRouter Response Status:', res.status);
-    console.log('OpenRouter Response:', JSON.stringify(data));
-
     if (!res.ok) {
-      throw new Error(`API error: ${JSON.stringify(data)}`);
+      const error = await res.text();
+      throw new Error(`API error: ${error}`);
     }
+
+    const data = await res.json();
     
     return {
       statusCode: 200,
@@ -44,7 +42,6 @@ exports.handler = async (event) => {
       body: JSON.stringify(data),
     };
   } catch (error) {
-    console.error('Function error:', error.message);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: error.message }),
