@@ -1,51 +1,50 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Send, Trash2, Sparkles, User } from "lucide-react";
 
-// Firebase placeholder configuration
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "your-app.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-app.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "your-app-id",
-};
-
-// Simulated API calls (replace with actual Firebase/API calls)
-const simulateAPICall = async (model, message, conciseMode) => {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  const responses = {
-    kimi: conciseMode
-      ? "I'm Grok, xAI's conversational AI. I excel at real-time information and witty responses."
-      : "I'm Grok, an AI assistant created by xAI. I'm designed to be helpful, accurate, and have a bit of personality. I can assist with a wide range of tasks. How can I help you today?",
-    gpt35: conciseMode
-      ? "I'm ChatGPT, OpenAI's efficient assistant. I'm fast and helpful for everyday tasks."
-      : "I'm ChatGPT, a conversational AI by OpenAI. I'm designed to provide helpful, accurate responses for a wide range of tasks including conversation, writing assistance, and problem-solving. What would you like to know?",
-  };
-
-  return responses[model];
-};
-
 const ChatUI = () => {
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      type: "bot",
-      text: "I don't have a personal name like a human does, but you can call me Assistant! How can I help you today?",
-      model: "kimi",
-    },
-  ]);
+  const [messages, setMessages] = useState(() => {
+    const saved = localStorage.getItem("chatMessages");
+    return saved
+      ? JSON.parse(saved)
+      : [
+          {
+            id: 1,
+            type: "bot",
+            text: "Hi, I’m Grok! How can I help you today?",
+            model: "grok",
+          },
+        ];
+  });
+
   const [inputValue, setInputValue] = useState("");
-  const [selectedModel, setSelectedModel] = useState("kimi");
+  const [selectedModel, setSelectedModel] = useState("grok");
   const [conciseMode, setConciseMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
   const modelConfig = {
-    kimi: { name: "Grok", icon: "⚡", color: "purple" },
+    grok: { name: "Grok", icon: "⚡", color: "purple" },
     gpt35: { name: "ChatGPT", icon: "🤖", color: "green" },
   };
+
+    // Ensure intro message appears if no saved history
+  useEffect(() => {
+    const saved = localStorage.getItem("chatMessages");
+    if (!saved || JSON.parse(saved).length === 0) {
+      const introMessage = {
+        id: 1,
+        type: "bot",
+        text: "Hi, I’m Grok! How can I help you today?",
+        model: "grok",
+      };
+      setMessages([introMessage]);
+    }
+  }, []);
+
+
+  useEffect(() => {
+    localStorage.setItem("chatMessages", JSON.stringify(messages));
+  }, [messages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -55,67 +54,91 @@ const ChatUI = () => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSend = async () => {
-  if (!inputValue.trim() || isLoading) return;
-
-  const userMessage = {
-    id: Date.now(),
-    type: "user",
-    text: inputValue,
-    model: selectedModel,
+  const formatMessagesForAPI = (msgs, limit = 15) => {
+    const recentMessages = msgs.slice(-limit);
+    return recentMessages.map((msg) => ({
+      role: msg.type === "user" ? "user" : "assistant",
+      content: msg.text,
+    }));
   };
 
-  setMessages((prev) => [...prev, userMessage]);
-  const userMessageText = inputValue;
-  setInputValue("");
-  setIsLoading(true);
+  const handleSend = async () => {
+    if (!inputValue.trim() || isLoading) return;
 
-  try {
-    const model = selectedModel === 'gpt35'
-                ? 'openai/gpt-3.5-turbo'
-                : 'x-ai/grok-3-mini';
+    const userMessageText = inputValue;
+    setInputValue("");
+    setIsLoading(true);
 
-    const res = await fetch('/.netlify/functions/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model,
-        userMessage: userMessageText,
-        conciseMode,
-      }),
-    });
-
-    if (!res.ok) throw new Error('API error ' + res.status);
-
-    const data = await res.json();
-    const reply = data.choices?.[0]?.message?.content || 'No reply';
-
-    const botMessage = {
-      id: Date.now() + 1,
-      type: 'bot',
-      text: reply,
+    const userMessage = {
+      id: Date.now(),
+      type: "user",
+      text: userMessageText,
       model: selectedModel,
     };
-    setMessages((prev) => [...prev, botMessage]);
-  } catch (error) {
-    console.error('Error:', error);
-    const errorMessage = {
-      id: Date.now() + 1,
-      type: 'bot',
-      text: 'Sorry, there was an error processing your request.',
-      model: selectedModel,
-    };
-    setMessages((prev) => [...prev, errorMessage]);
-  } finally {
-    setIsLoading(false);
-  }
+
+    setMessages((prev) => [...prev, userMessage]);
+
+    try {
+      const model =
+        selectedModel === "gpt35"
+          ? "openai/gpt-3.5-turbo"
+          : "x-ai/grok-3-mini";
+
+      const messageHistory = formatMessagesForAPI(messages, 30);
+
+      const res = await fetch("/.netlify/functions/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model,
+          userMessage: userMessageText,
+          conciseMode,
+          messageHistory,
+        }),
+      });
+
+      if (!res.ok) throw new Error("API error " + res.status);
+
+      const data = await res.json();
+      const reply = data.choices?.[0]?.message?.content || "No reply";
+
+      const botMessage = {
+        id: Date.now() + 1,
+        type: "bot",
+        text: reply,
+        model: selectedModel,
+      };
+      setMessages((prev) => [...prev, botMessage]);
+    } catch (error) {
+      console.error("Error:", error);
+      const errorMessage = {
+        id: Date.now() + 1,
+        type: "bot",
+        text: "Sorry, there was an error processing your request.",
+        model: selectedModel,
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // const handleClearChat = () => {
+  //   setMessages([]);
+  //   localStorage.removeItem("chatMessages");
+  // };
+  const handleClearChat = () => {
+  const introMessage = {
+    id: Date.now(),
+    type: "bot",
+    text: "Hi, I’m Grok! How can I help you today?",
+    model: "grok",
+  };
+
+  setMessages([introMessage]);
+  localStorage.setItem("chatMessages", JSON.stringify([introMessage]));
 };
 
-  const handleClearChat = () => {
-    setMessages([]);
-  };
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -153,13 +176,13 @@ const ChatUI = () => {
             </button>
           </div>
 
-          {/* Model Selection and Concise Mode */}
+          {/* Model Selection */}
           <div className="flex items-center justify-between">
             <div className="flex gap-2">
               <button
-                onClick={() => setSelectedModel("kimi")}
+                onClick={() => setSelectedModel("grok")}
                 className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  selectedModel === "kimi"
+                  selectedModel === "grok"
                     ? "bg-purple-100 text-purple-700"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
@@ -198,7 +221,7 @@ const ChatUI = () => {
           </div>
         </div>
 
-        {/* Messages Area */}
+        {/* Messages */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {messages.map((message) => (
             <div
@@ -235,17 +258,18 @@ const ChatUI = () => {
                 {message.type === "bot" && (
                   <span
                     className={`text-xs mt-1 px-2 py-1 rounded-full ${
-                      message.model === "kimi"
+                      message.model === "grok"
                         ? "text-purple-600 bg-purple-50"
                         : "text-green-600 bg-green-50"
                     }`}
                   >
-                    {message.model === "kimi" ? "Grok" : "ChatGPT"}
+                    {message.model === "grok" ? "Grok" : "ChatGPT"}
                   </span>
                 )}
               </div>
             </div>
           ))}
+
           {isLoading && (
             <div className="flex gap-3">
               <div className="flex-shrink-0 w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
@@ -272,7 +296,7 @@ const ChatUI = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Area */}
+        {/* Input */}
         <div className="border-t border-gray-200 p-6 bg-white">
           <div className="flex gap-3 items-end">
             <div className="flex-1 bg-gray-50 rounded-2xl border border-gray-200 focus-within:border-purple-500 transition-colors">

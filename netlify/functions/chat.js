@@ -3,7 +3,9 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
-  const { model, userMessage, conciseMode } = JSON.parse(event.body);
+//   const { model, userMessage, conciseMode } = JSON.parse(event.body);
+const { model, userMessage, conciseMode, messageHistory = [] } = JSON.parse(event.body);
+
 
   try {
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -16,14 +18,24 @@ exports.handler = async (event) => {
       },
       body: JSON.stringify({
         model,
+        // messages: [
+        //   { 
+        //     role: 'system', 
+        //     content: conciseMode 
+        //       ? 'You are a helpful assistant. Keep responses concise, 3-5 sentences.' 
+        //       : 'You are a helpful assistant.' 
+        //   },
+        //   { role: 'user', content: userMessage }
+        // ],
         messages: [
-          { 
+        { 
             role: 'system', 
             content: conciseMode 
-              ? 'You are a helpful assistant. Keep responses concise, 3-5 sentences.' 
-              : 'You are a helpful assistant.' 
-          },
-          { role: 'user', content: userMessage }
+            ? 'You are a helpful assistant. Keep responses concise, 1-3 sentences.' 
+            : 'You are a helpful assistant.' 
+        },
+        ...messageHistory,
+        { role: 'user', content: userMessage }
         ],
         temperature: 0.7,
       }),
